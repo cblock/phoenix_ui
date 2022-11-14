@@ -6,7 +6,10 @@ defmodule Phoenix.UI.Components.Dropdown do
 
   use Phoenix.UI, :component
 
-  @default_variant "elevated"
+  attr(:id, :string, required: true)
+
+  slot(:menu, required: true)
+  slot(:toggle, required: true)
 
   @doc """
   Renders dropdown component.
@@ -18,61 +21,65 @@ defmodule Phoenix.UI.Components.Dropdown do
         <:toggle>
           Toggle Dropdown
         </:toggle>
-        content
+        <:menu>
+
+        </:menu>
       </.drawer>
       ```
 
   """
   @spec dropdown(Socket.assigns()) :: Rendered.t()
-  def dropdown(raw_assigns) do
-    assigns = assign_new(raw_assigns, :variant, fn -> @default_variant end)
+  def dropdown(assigns) do
+    IO.inspect(assigns.menu, label: "MENU")
+    IO.inspect(assigns.toggle, label: "TOGGLE")
 
     ~H"""
-    <div id={@id} class="relative dropdown" phx-click-away={close_dropdown(@id)}>
-      <div
-        class="flex items-baseline cursor-pointer gap-x-1 dropdown-toggle"
-        phx-click={toggle_dropdown(@id)}
-      >
+    <div id={@id} class="relative inline-block dropdown" phx-click-away={close_dropdown("##{@id}")}>
+      <div class="dropdown-toggle" phx-click={toggle_dropdown("##{@id}")}>
         <%= render_slot(@toggle) %>
       </div>
-      <.menu extend_class="dropdown-menu hidden absolute right-0 mt-2 z-20">
-        <%= render_slot(@inner_block) %>
+      <.menu element="div" extend_class="dropdown-menu hidden absolute top right-0 mt-2 z-20">
+        <%= render_slot(@menu) %>
       </.menu>
     </div>
     """
   end
 
-  #############################################################################################
-  ### Actions
-  #############################################################################################
+  ### JS Interactions ##########################
 
   @doc """
-  Closes dropdown matching selector.
+  Closes dropdown via matching selector.
 
   ## Examples
 
-      iex> hide_drawer(selector)
+      iex> close_dropdown(selector)
       %JS{}
 
-      iex> hide_drawer(js, selector)
+      iex> close_dropdown(js, selector)
       %JS{}
 
   """
   @spec close_dropdown(String.t()) :: struct()
-  def close_dropdown(id), do: JS.hide(%JS{}, to: "##{id} .dropdown-menu")
+  def close_dropdown(selector), do: close_dropdown(%JS{}, selector)
+
+  @spec close_dropdown(struct(), String.t()) :: struct()
+  def close_dropdown(%JS{} = js, selector), do: JS.hide(js, to: "#{selector} .dropdown-menu")
 
   @doc """
-  Toggles dropdown matching selector.
+  Toggles dropdown via matching selector.
 
   ## Examples
 
-      iex> hide_drawer(selector)
+      iex> toggle_dropdown(selector)
       %JS{}
 
-      iex> hide_drawer(js, selector)
+      iex> toggle_dropdown(js, selector)
       %JS{}
 
   """
   @spec toggle_dropdown(String.t()) :: struct()
-  def toggle_dropdown(id), do: JS.toggle(%JS{}, to: "##{id} .dropdown-menu")
+  def toggle_dropdown(selector), do: toggle_dropdown(%JS{}, selector)
+
+  @spec toggle_dropdown(struct(), String.t()) :: struct()
+  def toggle_dropdown(%JS{} = js, selector), do: JS.toggle(js, to: "#{selector} .dropdown-menu")
 end
